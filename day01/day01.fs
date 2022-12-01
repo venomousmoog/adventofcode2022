@@ -1,6 +1,4 @@
-﻿//let lines = System.IO.File.ReadLines("test.txt")
-let lines = System.IO.File.ReadLines("data.txt")
-
+﻿
 // split the list into a list of lists of strings, one list of strings
 // for each of our elves
 let split lst = 
@@ -13,8 +11,11 @@ let split lst =
     // and run the accumulation function across the list and return the first element (grouped)
     fst (Seq.fold folder ([], []) lst)
 
+// load some elfs
+let elfs = split (System.IO.File.ReadLines "data.txt")
+
 // part 1
-split (List.ofSeq lines)
+elfs
     // total each elf
     |> Seq.map (Seq.sumBy int)
     // and find the max
@@ -22,7 +23,7 @@ split (List.ofSeq lines)
     |> printfn "%A"
 
 // part 2
-split lines 
+elfs
     // total each elf
     |> Seq.map (Seq.sumBy int)
     // sort the resulting list (largest to smallest)
