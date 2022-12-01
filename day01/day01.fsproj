@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <Content Include="data.txt" />
-    <Content Include="mini.txt" />
+    <Content Include="test.txt" />
     <Compile Include="day01.fs" />
   </ItemGroup>
 
