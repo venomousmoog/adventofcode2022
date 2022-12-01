@@ -6,7 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="day1.fs" />
+    <Content Include="data.txt" />
+    <Content Include="mini.txt" />
+    <Compile Include="day01.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
 </Project>
