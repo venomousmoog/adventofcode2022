@@ -6,7 +6,6 @@ let plays =
 
 // Part 1
 let scores = Map [ ("X", 1); ("Y", 2); ("Z", 3) ]
-
 let matches = Map [("A", "X"); ("B", "Y"); ("C", "Z")]
 let wins = Map [("A", "Y"); ("B", "Z"); ("C", "X")]
 let loses = Map [("A", "Z"); ("B", "X"); ("C", "Y")]
