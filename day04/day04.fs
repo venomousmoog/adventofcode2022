@@ -2,7 +2,7 @@ let lines = System.IO.File.ReadLines "data.txt"
 //let lines = System.IO.File.ReadLines "test.txt"
 
 // part1 
-type Range<'a> = {l:'a; u:'a}
+type Range<'a> = {l:'a; u:'a} // not using System.Range because the end property is a keyword and therefore annoying
 
 let workerPairs (lines:seq<string>) = 
     let toRange (r:string) = let s = r.Split("-") in {l = int s[0]; u = int s[1]}
