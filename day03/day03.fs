@@ -23,16 +23,9 @@ lines
     |> printfn "%A"  
 
 // part 2
-let rec groupByCount n s = 
-    seq {
-        if not (Seq.isEmpty s) then
-            yield Seq.take n s 
-            yield! groupByCount n (Seq.skip n s)
-    }
-
 lines 
     |> Seq.map Set
-    |> groupByCount 3
+    |> Seq.chunkBySize 3
     |> Seq.map (Seq.reduce Set.intersect)
     |> Seq.map Seq.head
     |> Seq.map priority
