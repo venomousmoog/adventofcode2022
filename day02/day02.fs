@@ -1,36 +1,45 @@
 // Load the test (or real) data
-let plays = 
-//    (System.IO.File.ReadLines "test.txt")
-    (System.IO.File.ReadLines "data.txt")
-    |> Seq.map(fun line -> let split = (line.Split " ") in (split[0], split[1]))
+//let lines = System.IO.File.ReadLines "test.txt"
+let lines = System.IO.File.ReadLines "data.txt"
 
-// Part 1
-let scores = Map [ ("X", 1); ("Y", 2); ("Z", 3) ]
-let matches = Map [("A", "X"); ("B", "Y"); ("C", "Z")]
-let wins = Map [("A", "Y"); ("B", "Z"); ("C", "X")]
-let loses = Map [("A", "Z"); ("B", "X"); ("C", "Y")]
+// part1
+type Play = Rock | Paper | Scissors
+
+let toPlay str = 
+    match str with 
+        | "A" | "X" -> Rock 
+        | "B" | "Y" -> Paper
+        | "C" | "Z" -> Scissors
+        | _ -> invalidArg "str" "unexpected string"
+
+let wins play = match play with | Rock -> Paper | Paper -> Scissors | Scissors -> Rock
+let loses play = match play with Rock -> Scissors | Paper -> Rock | Scissors -> Paper
+let playScore play = match play with Rock -> 1 | Paper -> 2 | Scissors -> 3
 
 let score play = 
     match play with
-        | (opponent, you) when wins[opponent] = you -> 6 + (int scores[you])    // win
-        | (opponent, you) when matches[opponent] = you -> 3 + (int scores[you]) // draw
-        | (_, you) -> 0 + (int scores[you])                                     // loss
+        | (opponent, you) when (wins opponent) = you -> 6 + (playScore you) // win
+        | (opponent, you) when opponent = you -> 3 + (playScore you)        // draw
+        | (_, you) -> 0 + (playScore you)                                   // loss
 
-plays
+lines
+    |> Seq.map (fun s -> let e = s.Split() in (toPlay e[0], toPlay e[1]))
     |> Seq.map(score)
     |> Seq.sum
     |> printfn "%A"
 
-// Part 2:
+//// Part 2:
 let strategy play = 
     match play with
-        | (opponent, "X") -> (opponent, loses[opponent])   // lose
-        | (opponent, "Y") -> (opponent, matches[opponent]) // draw
-        | (opponent, "Z") -> (opponent, wins[opponent])    // win
+        | (opponent, "X") -> (opponent, loses opponent)  // lose
+        | (opponent, "Y") -> (opponent, opponent)        // draw
+        | (opponent, "Z") -> (opponent, wins opponent)   // win
         | _ -> invalidOp "unexpected input"
 
-plays
+lines
+    |> Seq.map (fun s -> let e = s.Split() in (toPlay e[0], e[1]))
     |> Seq.map(strategy)
     |> Seq.map(score)
     |> Seq.sum
     |> printfn "%A"
+
