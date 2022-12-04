@@ -1,32 +1,31 @@
 let lines = System.IO.File.ReadLines "data.txt"
 //let lines = System.IO.File.ReadLines "test.txt"
 
+// part1 
 type Range<'a> = {l:'a; u:'a}
 
-// part1 
-let pairs = 
-    lines
-    |> Seq.map (fun l -> l.Split(",") 
-                         |> Array.map (fun r -> 
-                                let s = r.Split("-") in 
-                                {l = int s[0]; u = int s[1]}))
+let workerPairs (lines:seq<string>) = 
+    let toRange (r:string) = let s = r.Split("-") in {l = int s[0]; u = int s[1]}
+    let toRanges (l:string) = l.Split(",") |> Array.map toRange
+    lines |> Seq.map toRanges
 
-let fullyOverlap a b = 
-    if (a.l <= b.l && a.u >= b.u) || (b.l <= a.l && b.u >= a.u) then true else false 
+let fullyOverlap a b =
+    let chk r1 r2 = (r1.l <= r2.l && r1.u >= r2.u) 
+    chk a b || chk b a
 
-pairs
+lines 
+    |> workerPairs
     |> Seq.filter (fun f -> fullyOverlap f[0] f[1])
     |> Seq.length
     |> printfn "fullyOverlap: %A"
 
 // part2
 let partialOverlap a b = 
-    if ((a.l >= b.l && a.l <= b.u) 
-        || (a.u >= b.l && a.u <= b.u)
-        || (b.l >= a.l && b.l <= a.u)
-        || (b.u >= a.l && b.u <= a.u)) then true else false 
+    let chk i r = (i >= r.l && i <= r.u) 
+    chk a.l b || chk a.u b || chk b.l a || chk b.u a
 
-pairs
+lines
+    |> workerPairs
     |> Seq.filter (fun f -> partialOverlap f[0] f[1])
     |> Seq.length
     |> printfn "partialOverlap: %A"
