@@ -22,7 +22,6 @@ lines
     |> Seq.sum
     |> printfn "%A"  
 
-
 // part 2
 let rec groupByCount n s = 
     seq {
@@ -32,13 +31,9 @@ let rec groupByCount n s =
     }
 
 lines 
-    // create a list of sets
     |> Seq.map Set
-    // group the sets in groups of 3
     |> groupByCount 3
-    // find the intersection of the grouped sets (badges)
     |> Seq.map (Seq.reduce Set.intersect)
-    // get the first element out of each set
     |> Seq.map Seq.head
     |> Seq.map priority
     |> Seq.sum
