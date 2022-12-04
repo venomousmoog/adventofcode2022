@@ -5,9 +5,9 @@ let lines = System.IO.File.ReadLines "data.txt"
 // part1
 let priority c =
     match c with 
-        | t when t >= 'a' && t <= 'z' -> int (t - 'a') + 1
-        | t when t >= 'A' && t <= 'Z' -> int (t - 'A') + 27
-        | _ -> invalidOp "unexpected input"
+    | t when t >= 'a' && t <= 'z' -> int (t - 'a') + 1
+    | t when t >= 'A' && t <= 'Z' -> int (t - 'A') + 27
+    | _ -> invalidArg "c" "character out of range"
 
 let split (s:string) =
     let left = s.[0..(s.Length/2)-1]
