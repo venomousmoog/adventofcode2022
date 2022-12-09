@@ -3,16 +3,16 @@ let lines = System.IO.File.ReadLines "data.txt"
 //let lines = System.IO.File.ReadLines "test.txt"
 
 // part 1
-type Child =
+type Entry =
     | File of name:string * size:int
-    | Directory of name: string * children: Map<string, Child>
+    | Directory of name: string * children: Map<string, Entry>
 
     member this.name =
         match this with
         | File (name, _) -> name
         | Directory (name, _) -> name
 
-let rec insert tree (path:list<string>) (node:Child) =
+let rec insert tree (path:list<string>) (node:Entry) =
     match tree with
     | Directory (name, children) -> match path with
                                     | [] -> Directory (name, (Map.add node.name node children))

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "day08": {
+      "commandName": "Project",
+      "workingDirectory": "$(ProjectDir)"
+    }
+  }
+}
