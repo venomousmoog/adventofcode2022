@@ -24,7 +24,7 @@ let signal trace clock =
     (sample trace clock) * clock
 
 [20; 60; 100; 140; 180; 220]
-    |> Seq.map (sample trace)
+    |> Seq.map (signal trace)
     |> Seq.sum
     |> (printfn "%A")
 
