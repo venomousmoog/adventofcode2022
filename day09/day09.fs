@@ -32,10 +32,13 @@ let applyMove (head, tail) move =
     let t' = catch h' tail
     (t', (h', t'))
 
-lines
-    |> Seq.map (fun f -> f.Split())
-    |> Seq.map (fun [|a;b|] -> (a, int b))
-    |> Seq.collect (fun (a,b) -> seq {for _ in 1..b -> a})
+// split out moves into single commands (eg "R", 2 -> "R", "R")
+let moves = lines 
+            |> Seq.map (fun f -> f.Split())
+            |> Seq.map (fun [|a;b|] -> (a, int b))
+            |> Seq.collect (fun (a,b) -> seq {for _ in 1..b -> a})
+
+moves
     |> Seq.mapFold applyMove ((0,0), (0,0))
     |> fst
     |> Seq.distinct
@@ -43,17 +46,17 @@ lines
     |> (printfn "%A")
 
 // part 2
-let applyMove2 (head, rest) move =
+let applyMove2 knots move =
     // apply the move to the head, and then catch up the rest of the knots
-    let head' = shift head move
-    let rest' = fst (rest |> Seq.mapFold (fun head' tail -> let tail' = catch head' tail in (tail', tail')) head')
-    ((Seq.last rest'), (head', rest'))
+    let head' = shift (Seq.head knots) move
+    let catchup head' tail = let tail' = catch head' tail in (tail', tail')
+    let rest' = fst (knots 
+                     |> Seq.skip 1 
+                     |> Seq.mapFold catchup head')
+    ((Seq.last rest'), seq { yield head'; yield! rest' })
 
-lines
-    |> Seq.map (fun f -> f.Split())
-    |> Seq.map (fun [|a;b|] -> (a, int b))
-    |> Seq.collect (fun (a,b) -> seq {for _ in 1..b -> a})
-    |> Seq.mapFold applyMove2 ((0,0), seq{for _ in 1..9 -> (0,0)})
+moves
+    |> Seq.mapFold applyMove2 (seq {for _ in 0..9 -> (0,0)})
     |> fst
     |> Seq.distinct
     |> Seq.length
