@@ -38,6 +38,6 @@ let rec display s =
 
 seq {1..240}
     |> Seq.map (fun c -> (c, (sample trace c)))
-    |> Seq.map (fun (c, x) -> if (abs(((c-1)%40)-x) <= 1) then "#" else ".")
+    |> Seq.map (fun (c, x) -> if (abs(((c-1)%40)-x) <= 1) then "#" else " ")
     |> String.concat ""
     |> display
