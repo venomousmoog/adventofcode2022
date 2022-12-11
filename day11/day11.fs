@@ -1,24 +1,23 @@
-//let lines = System.IO.File.ReadLines "data.txt"
-let lines = System.IO.File.ReadLines "test.txt"
+let lines = System.IO.File.ReadLines "data.txt"
+//let lines = System.IO.File.ReadLines "test.txt"
 
 // part 1
-
 type Operator = Add | Multiply
 type Operand = Old | Value of int
 
 type Monkey = {
     operator: Operator
     operand: Operand
-    test: bigint
+    test: int
     trueMonkey: int
     falseMonkey: int
     // ick
     mutable inspections: int
-    mutable worryFactor: bigint
 }
 
+// let's load some monkeys
 let loadMonkey (lines:string list) =
-    let items = lines[1].Substring("  Starting items: ".Length).Split(", ") |> Array.map (fun is -> bigint (int is)) |> Seq.toList
+    let items = lines[1].Substring("  Starting items: ".Length).Split(", ") |> Array.map (fun is -> int is) |> Seq.toList
     let monkey = {
         operator = match lines[2]["  Operation: new = old ".Length] with 
                     | '+' -> Operator.Add 
@@ -27,15 +26,13 @@ let loadMonkey (lines:string list) =
         operand = match lines[2].Substring("  Operation: new = old + ".Length) with 
                   | "old" -> Operand.Old
                   | i -> Operand.Value (int i)
-        test = bigint (int (lines[3].Substring("  Test: divisible by ".Length)))
+        test = int (lines[3].Substring("  Test: divisible by ".Length))
         trueMonkey = int (lines[4].Substring("    If true: throw to monkey ".Length))
         falseMonkey = int (lines[5].Substring("    If false: throw to monkey ".Length))
         inspections = 0
-        worryFactor = bigint 3
     }
     (items, monkey)
 
-// let's load some monkeys
 let rec loadMonkeys lines =
     match lines with
     | [] -> []
@@ -43,29 +40,23 @@ let rec loadMonkeys lines =
            |> List.splitAt (min l.Length 7)
            |> (fun (monkey, rest) -> (loadMonkey monkey)::(loadMonkeys rest))
 
+// and cache our global state
 let (worryState, monkeys) = 
     let m = loadMonkeys (Seq.toList lines)
     ((List.map fst m), (List.map snd m))
 
-let inspect monkey (worry:bigint) =
+let inspect monkey worry =
     monkey.inspections <- monkey.inspections + 1
     let operand = match monkey.operand with 
                   | Old -> worry 
                   | Value i -> i
-    let worry' = 
-        (match monkey.operator with
-         | Add -> worry + operand
-         | Multiply -> worry * operand) / monkey.worryFactor
-    if worry' % monkey.test = 0 then
-        (monkey.trueMonkey, worry')
-    else
-        (monkey.falseMonkey, worry')
+    let worry' = (match monkey.operator with
+                  | Add -> worry + operand
+                  | Multiply -> worry * operand) / 3
+    match worry' % monkey.test with
+    | 0 -> (monkey.trueMonkey, worry')
+    | _ -> (monkey.falseMonkey, worry')
 
-// each round computes all monkeys, but 
-// items moved within the round (say from monkey 0
-// to monkey 1) will be computed at the receiving
-// monkey - so each monkey processed affects the state
-// of monkeys for the next:
 let rebuild state' index i e = 
     match i with
     | _ when i = index -> []
@@ -73,7 +64,7 @@ let rebuild state' index i e =
                             | Some a -> a
                             | None -> [])
 
-let updateMonkey (state: bigint list list) index =
+let updateMonkey inspect (state:'a list list) index =
     let state' = state[index] 
                  |> List.map (inspect monkeys[index]) 
                  |> List.groupBy fst
@@ -81,32 +72,49 @@ let updateMonkey (state: bigint list list) index =
                  |> Map
     state |> List.mapi (rebuild state' index)
 
-let round (state:bigint list list) =
+let round inspect (state:'a list list) =
     seq {0..state.Length-1}
-    |> Seq.fold updateMonkey state
+    |> Seq.fold (updateMonkey inspect) state
 
 seq {0..19}
-|> Seq.fold (fun s i -> round s) worryState
-|> printfn "%A"
+|> Seq.fold (fun s i -> round inspect s) worryState
+|> Seq.iteri (fun i e -> printfn "monkey %A: %A" i e)
 
 monkeys 
 |> List.map (fun m -> m.inspections)
 |> List.sortDescending
 |> List.take 2
-|> fun [a; b] -> a*b
-|> printfn "%A"
+|> fun [a; b] -> printfn $"{a} * {b} = {(bigint a) * (bigint b)}" 
 
 // part 2
-monkeys
-|> Seq.iter (fun m -> (m.inspections <- 0; m.worryFactor <- 1))
+monkeys |> Seq.iter (fun m -> (m.inspections <- 0))
 
-seq {0..10000}
-|> Seq.fold (fun s i -> ((if i%100 = 0 then printfn $"round {i}"); round s)) worryState
-|> printfn "%A"
+// not really a ring but it sounds good
+type Ring = (int*int) list
+
+let ring (i:int) = monkeys |> List.map (fun m -> (m.test, i%m.test))
+let modulo (a:Ring) (b:int) = a |> Seq.find (fun (factor, _) -> factor = b) |> snd
+let add (a:Ring) (b:Ring) = List.zip a b |> List.map (fun ((fa, va), (fb, vb)) -> assert (fa = fb); (fa, ((va%fa)+(vb%fa))%fa))
+let mul (a:Ring) (b:Ring) = List.zip a b |> List.map (fun ((fa, va), (fb, vb)) -> assert (fa = fb); (fa, ((va%fa)*(vb%fa))%fa))
+
+let inspectRing monkey (worry:Ring) =
+    monkey.inspections <- monkey.inspections + 1
+    let operand = match monkey.operand with 
+                  | Old -> worry 
+                  | Value i -> ring i
+    let worry' = (match monkey.operator with
+                  | Add -> add worry operand
+                  | Multiply -> mul worry operand)
+    match modulo worry' monkey.test with
+    | 0 -> (monkey.trueMonkey, worry')
+    | _ -> (monkey.falseMonkey, worry')
+
+seq {0..10_000-1}
+|> Seq.fold (fun s i -> round inspectRing s) (worryState |> List.map (List.map ring))
+|> Seq.iteri (fun i e -> printfn "monkey %A: %A" i e)
 
 monkeys 
 |> List.map (fun m -> m.inspections)
 |> List.sortDescending
 |> List.take 2
-|> fun [a; b] -> a*b
-|> printfn "%A"
+|> fun [a; b] -> printfn $"{a} * {b} = {(bigint a) * (bigint b)}" 
