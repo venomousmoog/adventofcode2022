@@ -61,8 +61,8 @@ let rebuild state' index i e =
     match i with
     | _ when i = index -> []
     | s -> List.append e (match (Map.tryFind s state') with 
-                            | Some a -> a
-                            | None -> [])
+                          | Some a -> a
+                          | None -> [])
 
 let updateMonkey inspect (state:'a list list) index =
     let state' = state[index] 
@@ -89,28 +89,22 @@ monkeys
 // part 2
 monkeys |> Seq.iter (fun m -> (m.inspections <- 0))
 
-// not really a ring but it sounds good
-type Ring = (int*int) list
-
-let ring (i:int) = monkeys |> List.map (fun m -> (m.test, i%m.test))
-let modulo (a:Ring) (b:int) = a |> Seq.find (fun (factor, _) -> factor = b) |> snd
-let add (a:Ring) (b:Ring) = List.zip a b |> List.map (fun ((fa, va), (fb, vb)) -> assert (fa = fb); (fa, ((va%fa)+(vb%fa))%fa))
-let mul (a:Ring) (b:Ring) = List.zip a b |> List.map (fun ((fa, va), (fb, vb)) -> assert (fa = fb); (fa, ((va%fa)*(vb%fa))%fa))
-
-let inspectRing monkey (worry:Ring) =
+let inspectMod modulus monkey worry =
     monkey.inspections <- monkey.inspections + 1
     let operand = match monkey.operand with 
                   | Old -> worry 
-                  | Value i -> ring i
+                  | Value i -> i
     let worry' = (match monkey.operator with
-                  | Add -> add worry operand
-                  | Multiply -> mul worry operand)
-    match modulo worry' monkey.test with
+                  | Add -> (worry + operand) % modulus
+                  | Multiply -> int ((bigint worry * bigint operand) % (bigint modulus)))
+    match worry' % monkey.test with
     | 0 -> (monkey.trueMonkey, worry')
     | _ -> (monkey.falseMonkey, worry')
 
+let modulus = monkeys |> Seq.fold (fun s m -> s * m.test) 1
+
 seq {0..10_000-1}
-|> Seq.fold (fun s i -> round inspectRing s) (worryState |> List.map (List.map ring))
+|> Seq.fold (fun s i -> round (inspectMod modulus) s) worryState
 |> Seq.iteri (fun i e -> printfn "monkey %A: %A" i e)
 
 monkeys 
