@@ -13,14 +13,6 @@ let segments =
     |> List.map (fun f -> Seq.toList (fst f))
     |> List.fold List.append []
 
-let bounds = 
-    let ext = segments |> Seq.append [((500,0),(500,0))]
-    let xmin = ext |> Seq.map (fun ((xa,_), (xb,_)) -> min xa xb) |> Seq.min 
-    let ymin = ext |> Seq.map (fun ((_,ya), (_,yb)) -> min ya yb) |> Seq.min 
-    let xmax = ext |> Seq.map (fun ((xa,_), (xb,_)) -> max xa xb) |> Seq.max 
-    let ymax = ext |> Seq.map (fun ((_,ya), (_,yb)) -> max ya yb) |> Seq.max
-    ((xmin-1, ymin-1), (xmax+1, ymax+1))
-
 // build our array map
 let map = 
     segments
@@ -48,13 +40,17 @@ let display map =
                     | true -> '#'
                     | false -> '.')
         |> System.String.Concat
-        |> printfn "%d: %s" y)
+        |> printfn "%3d: %s" y)
 
-let ((_, _), (_, floor)) = bounds
+let ymax = 
+    map
+    |> Seq.append [(500,0)]
+    |> Seq.map snd 
+    |> Seq.max
 
 // write something to place a new point of sand in the map:
 let move map (x, y) floor =
-    seq { (x,y+1); (x-1,y+1); (x+1,y+1) }
+    if y = -1 then seq { (x,y+1) } else seq { (x,y+1); (x-1,y+1); (x+1,y+1) }
     |> Seq.tryFind (fun (x',y') -> not (Set.contains (x',y') map) && y' <= floor)
 
 let rec place map (x,y) floor=
@@ -68,6 +64,13 @@ let rec search map floor count =
     | (_, y) when y = floor -> count
     | v -> search (Set.add v map) floor count+1
 
-search map floor 0 |> printfn "%A"
+search map (ymax+1) 0 |> printfn "%A"
 
 // part 2
+let rec fill map floor =
+    match place map (500,-1) floor with
+    | (500, -1) -> map
+    | v -> fill (Set.add v map) floor
+
+let filled = fill map (ymax+1)
+printfn "%A" ((Set.count filled) - (Set.count map))
